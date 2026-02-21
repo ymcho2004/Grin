@@ -1,0 +1,10 @@
+# Python 관련
+venv/
+__pycache__/
+*.pyc
+.env
+
+# Node / React 관련 (프론트엔드 폴더 이름이 grin-front 맞지?)
+grin-front/node_modules/
+grin-front/dist/
+.DS_Store

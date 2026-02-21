@@ -55,22 +55,27 @@ The development of Grin is divided into 6 strategic phases, moving from core inf
 
 Phase 1: Infrastructure & Skeleton
 [ ] Initialize FastAPI backend and React frontend.
+
 [ ] Set up the base API architecture and data flow between client and server.
 
 Phase 2: Real-time Data Visualization
 [ ] Integrate yfinance API for seamless US market data fetching.
+
 [ ] Implement interactive candlestick charts using Plotly or Lightweight Charts.
 
 Phase 3: Technical Indicator Engine
 [ ] Develop logic for calculating core indicators: RSI, Bollinger Bands, Volume Profile, and Support/Resistance levels.
+
 [ ] Create a pre-processing pipeline to transform raw data into feature vectors.
 
 Phase 4: Automation & Database Synchronization
 [ ] Implement a cron-job scheduler for daily market data updates.
+
 [ ] Optimize MySQL schema to handle historical and real-time data efficiently.
 
 Phase 5: Predictive Analysis & Feature Engineering (The AI Core)
 [ ] Analyze characteristics of historical data that achieved the target return (3-5%).
+
 [ ] Develop a baseline machine learning model using PyTorch to identify high-probability swing setups.
 
 Phase 6: Graph Intelligence (The GNN Phase)

@@ -1,14 +1,53 @@
+import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { AdvancedRealTimeChart } from "react-ts-tradingview-widgets";
 
 export default function DetailPage() {
-  // 👈 1. 주소창에서 ticker 변수를 쏙 뽑아옴! (/stock/AAPL 이면 ticker는 'AAPL'이 됨)
   const { ticker } = useParams();
   const navigate = useNavigate();
+  const currentTicker = ticker?.toUpperCase() || "NVDA";
 
+  // 상태 관리 바구니들
+  const [price, setPrice] = useState<number | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [flash, setFlash] = useState<'up' | 'down' | 'none'>('none');
+  const prevPrice = useRef<number | null>(null);
+
+  // 👈 오직 웹소켓만 담당하는 깔끔한 useEffect!
+  useEffect(() => {
+    setIsLoading(true); // 처음에 로딩 띄우기
+    const socket = new WebSocket(`ws://127.0.0.1:8000/ws/stock/${currentTicker}`);
+
+    socket.onmessage = (event) => {
+      const data = JSON.parse(event.data);
+      const newPrice = data.price;
+
+      // 가격 변동 색깔 이펙트 로직
+      if (prevPrice.current !== null) {
+        if (newPrice > prevPrice.current) {
+          setFlash('up'); // 올랐으면 빨강 🔴
+        } else if (newPrice < prevPrice.current) {
+          setFlash('down'); // 내렸으면 파랑 🔵
+        }
+      }
+
+      setPrice(newPrice);
+      prevPrice.current = newPrice;
+      setIsLoading(false); // 가격 들어왔으니 로딩 끝!
+
+      // 0.5초 뒤에 색깔 원상복구
+      setTimeout(() => setFlash('none'), 500);
+    };
+
+    // 컴포넌트 꺼질 때 전화 끊기
+    return () => socket.close();
+  }, [currentTicker]);
+
+  // 👇 화면 그리는 return은 딱 한 번만!
   return (
     <div className="bg-[#131518] text-white font-sans min-h-screen">
       
-      {/* 상단 네비게이션 (헤더) */}
+      {/* 상단 헤더 */}
       <header className="flex justify-between items-center px-8 py-4 border-b border-gray-800 bg-[#131518]">
         <div className="flex items-center gap-10">
           <h1 onClick={() => navigate('/main')} className="text-2xl font-extrabold text-[#20d87a] tracking-tight cursor-pointer">Grin.</h1>
@@ -18,56 +57,76 @@ export default function DetailPage() {
             <a href="#" className="text-white">주식 골라보기</a>
           </nav>
         </div>
-        {/* 상세 페이지에서는 굳이 검색창 안 둬도 되니까 심플하게 내 정보만! */}
         <button className="bg-[#2a2c33] hover:bg-gray-700 text-white px-4 py-2 rounded-lg text-sm font-bold transition-colors">내 정보</button>
       </header>
 
-      {/* 메인 컨텐츠 영역 */}
+      {/* 메인 컨텐츠 */}
       <main className="p-8 max-w-[1600px] mx-auto">
         
-        {/* 👈 2. 하드코딩했던 '엔비디아 NVDA' 대신 {ticker} 변수를 꽂아넣음! */}
+        {/* 종목명 & 반짝이는 실시간 가격 */}
         <div className="mb-6">
           <h2 className="text-4xl font-extrabold flex items-center gap-3">
-            {ticker} <span className="text-gray-400 text-xl font-normal">🇺🇸</span>
+            {currentTicker} <span className="text-gray-400 text-xl font-normal">🇺🇸</span>
           </h2>
-          <div className="text-4xl font-bold mt-3 flex items-baseline gap-3">
-            $ 126.50 {/* 이건 아직 가짜 데이터! */}
-            <span className="text-red-500 text-lg font-bold">▼ 2.30 (1.8%)</span>
+          <div className="mt-3 flex items-baseline gap-3">
+            {isLoading ? (
+              <span className="text-gray-500 text-2xl font-bold">가져오는 중... 🏃‍♂️💨</span>
+            ) : (
+              <div className={`text-5xl font-bold transition-colors duration-300 ${
+                flash === 'up' ? 'text-red-500' : flash === 'down' ? 'text-blue-500' : 'text-white'
+              }`}>
+                $ {price?.toLocaleString()}
+              </div>
+            )}
+            {!isLoading && <span className="text-gray-500 text-lg font-bold">실시간 변동</span>}
           </div>
         </div>
 
-        {/* 3단 그리드 레이아웃 (아까 만든 그대로!) */}
+        {/* 3단 그리드 (차트, AI, 관계망) */}
         <div className="grid grid-cols-12 gap-6 h-[700px]">
           
-          {/* 1. 차트 영역 */}
-          <div className="col-span-7 bg-[#1c1e23] rounded-2xl p-4 border border-gray-800 flex flex-col items-center justify-center">
-            <h3 className="text-gray-400 text-lg font-semibold mb-2">📈 {ticker} 실시간 캔들 차트</h3>
+          <div className="col-span-7 bg-[#1c1e23] rounded-2xl border border-gray-800 overflow-hidden shadow-2xl">
+            <AdvancedRealTimeChart 
+              symbol={`NASDAQ:${currentTicker}`} 
+              theme="dark" 
+              autosize 
+              allow_symbol_change={false}
+              hide_top_toolbar={false}
+              hide_side_toolbar={false}
+              interval="D" 
+              timezone="Etc/UTC"
+              style="1" 
+              locale="kr"
+            />
           </div>
 
-          {/* 2. 중앙 영역: AI 설명 */}
           <div className="col-span-3 flex flex-col gap-6">
-            <div className="bg-[#1c1e23] rounded-2xl p-5 border border-gray-800 flex-grow">
-              <h3 className="text-white text-lg font-bold mb-4">🧠 Grin AI 분석</h3>
+            <div className="bg-[#1c1e23] rounded-2xl p-6 border border-gray-800 flex-grow shadow-xl">
+              <h3 className="text-[#20d87a] text-lg font-bold mb-4 flex items-center gap-2">
+                <span>🧠</span> Grin AI 분석
+              </h3>
               <div className="space-y-4 text-sm text-gray-300">
-                <div className="p-3 bg-[#2a2c33] rounded-lg border-l-4 border-blue-500">
-                  <span className="text-blue-400 font-bold block mb-1">기술적 지표 (RSI)</span>
-                  {ticker}의 현재 RSI는 32로 단기 과매도 구간입니다.
+                <div className="p-4 bg-[#2a2c33] rounded-xl border-l-4 border-[#20d87a]">
+                  <p className="leading-relaxed">
+                    {currentTicker} 모델 분석 결과, 현재 섹터 내 수급 유입 강도가 높습니다. 
+                    GNN 노드상 인접 종목과의 상관계수가 높아지는 추세입니다.
+                  </p>
                 </div>
               </div>
             </div>
-            {/* 투자자 동향 */}
-            <div className="bg-[#1c1e23] rounded-2xl p-5 border border-gray-800 h-[200px]">
-              <h3 className="text-white text-md font-bold mb-4">투자자 동향</h3>
-            </div>
           </div>
 
-          {/* 3. 우측 영역: GNN 마인드맵 */}
-          <div className="col-span-2 bg-[#1c1e23] rounded-2xl p-4 border border-gray-800 flex flex-col items-center justify-center">
-            <h3 className="text-white text-md font-bold mb-2">🌐 {ticker} 섹터 관계망</h3>
+          <div className="col-span-2 bg-[#1c1e23] rounded-2xl p-5 border border-gray-800 shadow-xl flex flex-col">
+            <h3 className="text-white text-md font-bold mb-4 flex items-center gap-2">
+              <span>🌐</span> 섹터 관계망
+            </h3>
+            <div className="flex-grow flex items-center justify-center border border-dashed border-gray-700 rounded-xl text-gray-500 text-xs text-center">
+              GNN Visualizer<br/>Coming Soon
+            </div>
           </div>
 
         </div>
       </main>
     </div>
-  )
+  );
 }

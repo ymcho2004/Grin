@@ -55,7 +55,6 @@ The development of Grin is divided into 6 strategic phases, moving from core inf
 
 Phase 1: Infrastructure & Skeleton
 [ ] Initialize FastAPI backend and React frontend.
-
 [ ] Set up the base API architecture and data flow between client and server.
 
 Phase 2: Real-time Data Visualization

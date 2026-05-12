@@ -49,7 +49,7 @@ This enables users to understand why a recommendation was generated, not just wh
 - **AI/ML:** PyTorch Geometric (GNN), Scikit-learn, yfinance
 - **Database:** MySQL
 
-📅 Roadmap
+### 📅 Roadmap
 The development of Grin is divided into 6 strategic phases, transitioning from fundamental data structures to an automated Graph AI trading system. All progress and technical engineering logs are tracked via GitHub Issues.
 
 Phase 0: Core Data Structure & Fundamentals (Completed)

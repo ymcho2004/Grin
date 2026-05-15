@@ -1,1 +1,46 @@
 @import "tailwindcss";
+
+@layer base {
+  :root {
+    --action-blue: #0066cc;
+    --surface-white: #ffffff;
+    --surface-parchment: #fbfbfd;
+    --surface-dark: #1d1d1f; /* Near-black tile */
+  }
+
+  body {
+    /* 17px base, SF Pro font stack */
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    font-size: 17px;
+    color: var(--surface-dark);
+    background-color: var(--surface-white);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    letter-spacing: -0.015em; 
+  }
+}
+
+@layer components {
+  /* Micro-interaction for all buttons */
+  .btn-micro {
+    transition: transform 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .btn-micro:active {
+    transform: scale(0.95);
+  }
+  
+  /* Quiet Blue CTA (메인 액션 버튼용) */
+  .btn-apple-blue {
+    background-color: var(--action-blue);
+    color: white;
+    border-radius: 9999px; /* Pill shape */
+    font-weight: 500;
+  }
+  .btn-apple-blue:hover {
+    background-color: #005bb5;
+  }
+}

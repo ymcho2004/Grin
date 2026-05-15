@@ -1,4 +1,5 @@
 import asyncio
+import yfinance as yf
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect 
 from fastapi.middleware.cors import CORSMiddleware
 from api_routes import router
@@ -39,3 +40,29 @@ async def websocket_endpoint(websocket: WebSocket, ticker: str):
             await asyncio.sleep(0.5) 
     except WebSocketDisconnect:
         print(f"연결 종료: {ticker}")
+
+@app.websocket("/ws/macro")
+async def websoket_macro(websocket: WebSocket):
+    await websocket.accept()
+    tickers=["^GSPC", "^IXIC", "KRW=X"]
+
+    try:
+        while True:
+            macro_data={}
+            for ticker in tickers:
+                stock = yf.Ticker(ticker)
+                price = stock.fast_info.get('last_price')
+                if price is None or price == 0:
+                    hist = stock.history(period="1d")
+                    price = hist['Close'].iloc[-1] if not hist.empty else 0
+
+                key="sp500" if ticker == "^GSPC" else "nasdaq" if ticker == "^IXIC" else "exchange_rate"
+                macro_data[key] = round(price, 2)
+
+            await websocket.send_json(macro_data)
+            await asyncio.sleep(1)
+    
+    except Exception as e:
+        print(f"메인 웹소켓 에러: {e}")
+    finally:
+        await websocket.close()

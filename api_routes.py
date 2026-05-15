@@ -1,5 +1,6 @@
 from fastapi import APIRouter
 from stock_logic import get_current_price, get_top_sp500
+import yfinance as yf
 
 router = APIRouter()
 

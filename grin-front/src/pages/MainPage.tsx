@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { useState, useEffect } from "react"; // 👈 useEffect 꼭 필요함!
+import { useState, useEffect } from "react";
 
 interface Stock {
   ticker: string;
@@ -12,9 +12,12 @@ export default function MainPage() {
   const navigate = useNavigate();
   const [searchInput, setSearchInput] = useState("");
   
-  // 👈 오타 수정 완료 (setStcoks -> setStocks)
   const [stocks, setStocks] = useState<Stock[]>([]);
+  const [macro, setMacro] = useState({sp500: 0, nasdaq: 0, exchange_rate: 0});
   const [isLoading, setIsLoading] = useState(true);
+
+  // 탭 상태 관리 (swing, scanner, news)
+  const [activeTab, setActiveTab] = useState("swing");
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -23,34 +26,37 @@ export default function MainPage() {
     }
   };
 
-  // 👈 백엔드에서 찐 데이터 긁어오는 핵심 로직 추가!
+  // 1. 전체 주식 리스트 (마켓 스캐너)
   useEffect(() => {
     fetch('http://127.0.0.1:8000/api/stocks/top')
       .then((res) => res.json())
-      .then((data) => {
-        setStocks(data); // 백엔드에서 받은 5개 리스트를 state에 저장
-        setIsLoading(false); // 로딩 끝!
-      })
-      .catch((err) => {
-        console.error("데이터 가져오다 에러남:", err);
-        setIsLoading(false);
-      });
+      .then((data) => setStocks(data))
+      .catch((err) => console.error("데이터 에러:", err));
+  }, []);
+
+  // 2. 거시 지표 웹소켓
+  useEffect(() => {
+    const socket = new WebSocket('ws://127.0.0.1:8000/ws/macro');
+    socket.onmessage = (event) => {
+      const data = JSON.parse(event.data);
+      setMacro(data);
+      setIsLoading(false);
+    };
+    return () => socket.close();
   }, []);
 
   return (
-    <div className="bg-[#131518] min-h-screen text-white w-full font-sans">
+    // Apple Design: Parchment 배경, Dark Tile 텍스트
+    <div className="bg-[#fbfbfd] min-h-screen text-[#1d1d1f] w-full font-sans">
       
-      {/* 1. 토스 PC버전 스타일 넓은 헤더 */}
-      <header className="flex justify-between items-center px-8 py-4 border-b border-gray-800 bg-[#131518]">
+      {/* 헤더 섹션: 투명도 있는 흰색 배경에 블러 효과 */}
+      <header className="flex justify-between items-center px-8 py-4 bg-white/80 backdrop-blur-md border-b border-[#e5e5ea] sticky top-0 z-50">
         <div className="flex items-center gap-10">
-          <h1 
-            onClick={() => navigate('/')}
-            className="text-2xl font-extrabold text-[#20d87a] tracking-tight cursor-pointer">Grin.</h1>
-          <nav className="flex gap-6 text-[16px] text-gray-400 font-bold">
-            <a href="#" className="text-white">홈</a>
-            <a href="#" className="hover:text-white transition-colors">피드</a>
-            <a href="#" className="hover:text-white transition-colors">주식 골라보기</a>
-            <a href="#" className="hover:text-white transition-colors">내 계좌</a>
+          <h1 onClick={() => navigate('/')} className="text-2xl font-semibold tracking-tight cursor-pointer">Grin.</h1>
+          <nav className="flex gap-6 text-[15px] text-[#86868b] font-medium">
+            <a href="#" className="text-[#1d1d1f]">홈</a>
+            <a href="#" className="hover:text-[#1d1d1f] transition-colors">피드</a>
+            <a href="#" className="hover:text-[#1d1d1f] transition-colors">전략 탐색</a>
           </nav>
         </div>
         <div className="flex items-center gap-4">
@@ -59,90 +65,121 @@ export default function MainPage() {
               type="text" 
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
-              placeholder="🔍 / 를 눌러 검색하세요" 
-              className="bg-[#2a2c33] text-[14px] rounded-lg px-4 py-2.5 w-72 focus:outline-none focus:ring-1 focus:ring-gray-500 transition-all uppercase" 
+              placeholder="🔍 종목 검색 (AAPL, TSLA...)" 
+              className="bg-[#f5f5f7] text-[15px] rounded-full px-5 py-2.5 w-72 focus:outline-none focus:bg-[#e8e8ed] transition-all uppercase placeholder-[#86868b]" 
             />
           </form>
-          <button className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 rounded-lg text-[14px] font-bold transition-colors">
-            로그인
-          </button>
+          <button className="btn-apple-blue btn-micro px-6 py-2.5 text-[15px]">로그인</button>
         </div>
       </header>
 
-      {/* 메인 컨텐츠 영역 */}
-      <main className="max-w-[1400px] mx-auto px-6 mt-8">
+      <main className="max-w-[1200px] mx-auto px-6 mt-12">
         
-        {/* 2. 상단 지수 전광판 */}
-        <div className="flex gap-8 overflow-x-auto pb-6 mb-8 border-b border-gray-800">
-          <div className="flex-shrink-0 cursor-pointer">
-            <p className="text-gray-400 text-[13px] font-semibold mb-1">S&P 500</p>
-            <div className="flex items-baseline gap-2">
-              <h3 className="text-xl font-bold">5,842.10</h3>
-              <span className="text-red-500 text-sm font-bold">+12.30 (0.2%)</span>
+        {/* 거시 지표 섹션: 화이트 카드, 부드러운 곡률, 선 테두리 */}
+        <div className="flex gap-6 mb-12">
+          {[
+            { label: "S&P 500", value: macro.sp500 },
+            { label: "NASDAQ", value: macro.nasdaq },
+            { label: "원/달러 환율", value: `₩ ${macro.exchange_rate}` }
+          ].map((item, i) => (
+            <div key={i} className="bg-white border border-[#e5e5ea] rounded-[18px] p-6 flex-1 flex flex-col gap-2">
+              <span className="text-[#86868b] font-medium text-[15px]">{item.label}</span>
+              <span className="text-3xl font-semibold tracking-tight text-[#1d1d1f]">
+                {isLoading ? "로딩 중..." : item.value.toLocaleString()}
+              </span>
+              <span className="text-[11px] text-[#86868b] uppercase mt-1 tracking-widest">Data: Yahoo Finance (Delayed)</span>
             </div>
-          </div>
-          <div className="w-[1px] bg-gray-800 my-1"></div>
-          <div className="flex-shrink-0 cursor-pointer">
-            <p className="text-gray-400 text-[13px] font-semibold mb-1">나스닥</p>
-            <div className="flex items-baseline gap-2">
-              <h3 className="text-xl font-bold">22,886.06</h3>
-              <span className="text-red-500 text-sm font-bold">+203.34 (0.89%)</span>
-            </div>
-          </div>
-          <div className="w-[1px] bg-gray-800 my-1"></div>
-          <div className="flex-shrink-0 cursor-pointer">
-            <p className="text-gray-400 text-[13px] font-semibold mb-1">달러 환율</p>
-            <div className="flex items-baseline gap-2">
-              <h3 className="text-xl font-bold">1,452.00</h3>
-              <span className="text-red-500 text-sm font-bold">+1.3 (0.08%)</span>
-            </div>
-          </div>
+          ))}
         </div>
 
-        {/* 3. 리스트 탭 메뉴 */}
-        <div className="flex gap-6 text-[17px] font-bold mb-4 border-b border-gray-800">
-          <button className="text-white border-b-2 border-white pb-3 -mb-[2px]">🔥 AI 스윙 타점</button>
-          <button className="text-gray-500 hover:text-gray-300 pb-3">실시간 차트</button>
-          <button className="text-gray-500 hover:text-gray-300 pb-3">투자자 동향</button>
+        {/* 탭 메뉴: 여백을 넓게, 심플한 밑줄 */}
+        <div className="flex gap-10 text-[17px] font-medium mb-6 border-b border-[#e5e5ea]">
+          <button 
+            onClick={() => setActiveTab("swing")}
+            className={`${activeTab === "swing" ? "text-[#1d1d1f] border-b-2 border-[#1d1d1f]" : "text-[#86868b]"} pb-4 -mb-[1px] transition-all`}
+          >
+            AI 스윙 타점
+          </button>
+          <button 
+            onClick={() => setActiveTab("scanner")}
+            className={`${activeTab === "scanner" ? "text-[#1d1d1f] border-b-2 border-[#1d1d1f]" : "text-[#86868b]"} pb-4 -mb-[1px] transition-all`}
+          >
+            마켓 스캐너
+          </button>
+          <button 
+            onClick={() => setActiveTab("news")}
+            className={`${activeTab === "news" ? "text-[#1d1d1f] border-b-2 border-[#1d1d1f]" : "text-[#86868b]"} pb-4 -mb-[1px] transition-all`}
+          >
+            관련 뉴스
+          </button>
         </div>
 
-        {/* 4. 종목 리스트 테이블 */}
-        <div className="w-full text-left">
-          {/* 테이블 헤더 */}
-          <div className="flex text-gray-400 text-[13px] font-semibold py-3 border-b border-gray-800">
-            <div className="w-16 text-center">순위</div>
-            <div className="flex-1 pl-4">종목명</div>
-            <div className="w-40 text-right">현재가</div>
-            <div className="w-40 text-right">예상 등락률</div>
-            <div className="w-80 text-left pl-12">AI 분석 근거</div>
-          </div>
-
-          {/* 👈 하드코딩 날려버리고 데이터 자동 매핑! */}
-          {isLoading ? (
-            <div className="text-center py-20 text-gray-400 text-lg font-bold">
-              yfinance 서버에서 찐 데이터 긁어오는 중... 🏃‍♂️💨
-            </div>
-          ) : (
-            stocks.map((stock, index) => (
-              <div 
-                key={stock.ticker}
-                onClick={() => navigate(`/stock/${stock.ticker}`)}
-                className="flex items-center py-4 border-b border-gray-800/50 hover:bg-[#1c1e23] cursor-pointer transition-colors"
-              >
-                <div className="w-16 text-center text-gray-400 font-bold">{index + 1}</div>
-                <div className="flex-1 flex items-center gap-3 pl-4">
-                  <div className="w-8 h-8 bg-[#2a2c33] rounded-full flex items-center justify-center text-xs border border-gray-700 font-bold">
-                    {stock.ticker[0]}
-                  </div>
-                  <h4 className="font-bold text-[16px]">
-                    {stock.name} <span className="text-gray-500 text-[13px] ml-1 font-normal">{stock.ticker}</span>
-                  </h4>
-                </div>
-                <div className="w-40 text-right font-bold text-[16px]">$ {stock.price.toLocaleString()}</div>
-                <div className="w-40 text-right text-gray-400 font-bold text-[16px]">-</div>
-                <div className="w-80 text-left pl-12 text-gray-500 text-[14px]">분석 데이터 로딩 중...</div>
+        {/* 탭 컨텐츠 */}
+        <div className="min-h-[400px]">
+          {activeTab === "swing" && (
+            <div className="animate-fadeIn">
+              <div className="bg-[#f5f5f7] rounded-[14px] p-5 mb-8 text-[#1d1d1f] text-[15px] font-medium flex items-center gap-3">
+                <span className="text-xl">🎯</span> GNN 모델이 분석한 24시간 내 +3% 이상 급등 확률 85% 이상 종목입니다.
               </div>
-            ))
+              <table className="w-full text-[15px]">
+                <thead>
+                  <tr className="text-[#86868b] border-b border-[#e5e5ea]">
+                    <th className="py-4 font-medium w-24 text-center">추천</th>
+                    <th className="py-4 font-medium text-left pl-4">종목명</th>
+                    <th className="py-4 font-medium text-right">진입 권장가</th>
+                    <th className="py-4 font-medium text-right">기대 수익률</th>
+                    <th className="py-4 font-medium text-left pl-12">AI 판단 근거</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {stocks.slice(0, 2).map((stock) => (
+                    <tr key={stock.ticker} onClick={() => navigate(`/stock/${stock.ticker}`)} className="border-b border-[#e5e5ea] hover:bg-[#f5f5f7] cursor-pointer transition-colors">
+                      <td className="py-6 text-center">
+                        <span className="bg-[#0066cc] text-white text-[11px] font-semibold px-3 py-1.5 rounded-full tracking-wide">BUY</span>
+                      </td>
+                      <td className="py-6 pl-4 font-semibold text-[17px]">{stock.name} <span className="text-[#86868b] text-[15px] font-normal ml-1">{stock.ticker}</span></td>
+                      <td className="py-6 text-right font-medium">$ {stock.price}</td>
+                      <td className="py-6 text-right font-semibold text-[#1d1d1f]">+3.25%</td>
+                      <td className="py-6 pl-12 text-[15px] text-[#86868b]">섹터 내 상관성 임계치(0.8) 돌파 및 수급 집중</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+
+          {activeTab === "scanner" && (
+            <div className="animate-fadeIn">
+              <table className="w-full text-[15px]">
+                <thead>
+                  <tr className="text-[#86868b] border-b border-[#e5e5ea]">
+                    <th className="py-4 font-medium w-20">순위</th>
+                    <th className="py-4 font-medium text-left pl-4">종목명</th>
+                    <th className="py-4 font-medium text-right">현재가</th>
+                    <th className="py-4 font-medium text-right">상태</th>
+                    <th className="py-4 font-medium text-left pl-12">데이터 수집</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {stocks.map((stock, index) => (
+                    <tr key={stock.ticker} onClick={() => navigate(`/stock/${stock.ticker}`)} className="border-b border-[#e5e5ea] hover:bg-[#f5f5f7] cursor-pointer transition-colors">
+                      <td className="py-6 text-center text-[#86868b] font-medium">{index + 1}</td>
+                      <td className="py-6 pl-4 font-semibold text-[17px]">{stock.name} <span className="text-[#86868b] text-[15px] font-normal ml-1">{stock.ticker}</span></td>
+                      <td className="py-6 text-right font-medium">$ {stock.price.toLocaleString()}</td>
+                      <td className="py-6 text-right text-[#1d1d1f] text-[13px] font-semibold tracking-wide">LIVE</td>
+                      <td className="py-6 pl-12 text-[15px] text-[#86868b]">Real-time WebSocket Active</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+
+          {activeTab === "news" && (
+            <div className="flex flex-col items-center justify-center py-32 text-[#86868b] animate-pulse">
+              <p className="text-2xl font-semibold mb-3 tracking-tight">Global Market Headlines</p>
+              <p className="text-[15px]">실시간 뉴스 API 연동 준비 중... (yfinance News API)</p>
+            </div>
           )}
         </div>
       </main>

@@ -50,33 +50,48 @@ This enables users to understand why a recommendation was generated, not just wh
 - **Database:** MySQL
 
 ### 📅 Roadmap
-🗺️ Project Roadmap
-The development of Grin is divided into 6 strategic phases, moving from core infrastructure to advanced Graph AI implementation.
+The development of Grin is divided into 6 strategic phases, transitioning from fundamental data structures to an automated Graph AI trading system. All progress and technical engineering logs are tracked via GitHub Issues.
 
-Phase 1: Infrastructure & Skeleton
-[ ] Initialize FastAPI backend and React frontend.
-[ ] Set up the base API architecture and data flow between client and server.
+Phase 0: Core Data Structure & Fundamentals (Completed)
 
-Phase 2: Real-time Data Visualization
-[ ] Integrate yfinance API for seamless US market data fetching.
+[✅] [Data Structure] What is Graph? #1
 
-[ ] Implement interactive candlestick charts using Plotly or Lightweight Charts.
+[✅] [Data Structure] Graph Traversal and ADT Implementation (C) #2
 
-Phase 3: Technical Indicator Engine
-[ ] Develop logic for calculating core indicators: RSI, Bollinger Bands, Volume Profile, and Support/Resistance levels.
+Phase 1: Data Pipeline & Infrastructure
 
-[ ] Create a pre-processing pipeline to transform raw data into feature vectors.
+[ ] [Data] S&P 500 Core Stocks 5-Year OHLCV Data Collection via yfinance API #3
 
-Phase 4: Automation & Database Synchronization
-[ ] Implement a cron-job scheduler for daily market data updates.
+[ ] [Data] Time-Series Data Interpolation & Feature Scaling (MinMax/Standard) #4
 
-[ ] Optimize MySQL schema to handle historical and real-time data efficiently.
+[ ] [Data] Macroeconomic Indicators (VIX, Interest Rates) API Integration #5
 
-Phase 5: Predictive Analysis & Feature Engineering (The AI Core)
-[ ] Analyze characteristics of historical data that achieved the target return (3-5%).
+Phase 2: Graph Construction & Feature Engineering
 
-[ ] Develop a baseline machine learning model using PyTorch to identify high-probability swing setups.
+[ ] [Feature] Correlation-based Adjacency Matrix Extraction #6
 
-Phase 6: Graph Intelligence (The GNN Phase)
-[ ] Construct a Stock Relation Graph based on sectors, industries, and supply chains.
-[ ] Implement GNN (Graph Neural Networks) using PyTorch Geometric to capture inter-stock correlation and market sentiment propagation.
+[ ] [Feature] Technical Indicators (RSI, MACD, BB) to Node Feature Vectors #7
+
+[ ] [Impl] PyTorch Geometric (PyG) Data Object & Tensor Conversion #8
+
+Phase 3: AI Modeling (The GNN Core)
+
+[ ] [Model] GAT (Graph Attention Network) based Edge Weight Self-Learning Architecture #9
+
+[ ] [Model] Spatio-Temporal Model (GNN + LSTM/GRU) Design for Time-Series #10
+
+[ ] [Train] Rolling Window Training Loop & Loss Optimization Setup #11
+
+Phase 4: Backtesting & Risk Management (The Quant Heart)
+
+[ ] [Backtest] Local Backtesting Environment Setup using Backtrader #12
+
+[ ] [Logic] Dynamic Stop-Loss & MDD Minimization Rules (Hardcoded) #13
+
+[ ] [Analysis] Benchmark (S&P 500) Comparison & Automated Report Generation #14
+
+Phase 5: Live Trading & Deployment
+
+[ ] [API] Alpaca Paper Trading API Integration & Real-time Order Execution #15
+
+[ ] [Deploy] 24/7 Trading Bot Deployment on Cloud (AWS/GCP) with Slack Alerts #16
